@@ -21,7 +21,8 @@ output
 tomcat-build-libs
 # Next line commented out, because test/webapp-virtual-library and
 # test/webapp-virtual-webapp use it:
-# target
+#WH.
+target
 work
 build.properties
 mvn.properties
