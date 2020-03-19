@@ -86,6 +86,7 @@ public class VersionLoggerListener implements LifecycleListener {
 
 
     private void log() {
+
         log.info(sm.getString("versionLoggerListener.serverInfo.server.version",
                 ServerInfo.getServerInfo()));
         log.info(sm.getString("versionLoggerListener.serverInfo.server.built",

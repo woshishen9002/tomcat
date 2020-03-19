@@ -16,6 +16,7 @@
  */
 package org.apache.tomcat.util.res;
 
+import java.io.UnsupportedEncodingException;
 import java.text.MessageFormat;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -131,6 +132,9 @@ public class StringManager {
             // Avoid NPE if bundle is null and treat it like an MRE
             if (bundle != null) {
                 str = bundle.getString(key);
+                //wh. 将编码转为utf-8
+                //java中properties配置文件默认的编码为：ISO-8859-1，是不支持中文的，所以会乱码
+                str = new String(str.getBytes("ISO-8859-1"),"UTF-8");
             }
         } catch (MissingResourceException mre) {
             //bad: shouldn't mask an exception the following way:
@@ -144,6 +148,8 @@ public class StringManager {
             //better: consistent with container pattern to
             //      simply return null.  Calling code can then do
             //      a null check.
+            str = null;
+        } catch (UnsupportedEncodingException e) { //wh. add
             str = null;
         }
 
@@ -162,6 +168,8 @@ public class StringManager {
      *         key if the key was not found.
      */
     public String getString(final String key, final Object... args) {
+        //WH. 这里传入的key是英文，但经过以下方法value就变成乱码了
+        //所以在getString中进行转码处理
         String value = getString(key);
         if (value == null) {
             value = key;

@@ -113,6 +113,7 @@ class DirectJDKLog implements Log {
 
     @Override
     public final void info(Object message) {
+        //WH. jdk的描述信息日志
         log(Level.INFO, String.valueOf(message), null);
     }
 
