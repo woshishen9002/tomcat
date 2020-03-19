@@ -43,6 +43,8 @@ import org.apache.juli.logging.LogFactory;
  *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
+ *
+ * wh.启动类
  */
 public final class Bootstrap {
 
@@ -73,12 +75,15 @@ public final class Bootstrap {
 
     private void initClassLoaders() {
         try {
+            //通用类加载器，加载？
             commonLoader = createClassLoader("common", null);
             if (commonLoader == null) {
                 // no config file, default to this loader - we might be in a 'single' env.
                 commonLoader = this.getClass().getClassLoader();
             }
+            //服务类加载器，加载？
             catalinaLoader = createClassLoader("server", commonLoader);
+            //共享类加载器，加载？
             sharedLoader = createClassLoader("shared", commonLoader);
         } catch (Throwable t) {
             handleThrowable(t);
@@ -185,21 +190,28 @@ public final class Bootstrap {
     public void init() throws Exception {
 
         // Set Catalina path
+        //设置catalina的home和工作路径
         setCatalinaHome();
         setCatalinaBase();
 
+        //初始化类加载器，多种类型的类加载器
         initClassLoaders();
 
+        //设置当前线程的上下文类加载器（或者叫系统类加载器）
         Thread.currentThread().setContextClassLoader(catalinaLoader);
 
+        //通过创建的catalinaLoader类加载器，加载catalina的核心类
         SecurityClassLoad.securityClassLoad(catalinaLoader);
 
         // Load our startup class and call its process() method
         if (log.isDebugEnabled())
             log.debug("Loading startup class");
+
+        //加载catalina启动类org.apache.catalina.startup.Catalina
         Class<?> startupClass =
             catalinaLoader.loadClass
             ("org.apache.catalina.startup.Catalina");
+        //构建catalina启动类实例
         Object startupInstance = startupClass.newInstance();
 
         // Set the shared extensions class loader
@@ -210,6 +222,8 @@ public final class Bootstrap {
         paramTypes[0] = Class.forName("java.lang.ClassLoader");
         Object paramValues[] = new Object[1];
         paramValues[0] = sharedLoader;
+
+        //调用catalina启动类的setParentClassLoader(),设置父类加载器为sharedLoader
         Method method =
             startupInstance.getClass().getMethod(methodName, paramTypes);
         method.invoke(startupInstance, paramValues);
@@ -376,17 +390,29 @@ public final class Bootstrap {
      */
     public static void main(String args[]) {
 
+        /**
+         * 这里为什么加锁？
+         * 为保证daemon实例只初始化一次，因为daemon是全局变量，存在线程安全问题
+         */
         synchronized (daemonLock) {
             if (daemon == null) {
                 // Don't set daemon until init() has completed
                 Bootstrap bootstrap = new Bootstrap();
                 try {
+                    //初始化,做了以下事情：
+                    //1.设置catalina的home和工作路径
+                    //2.初始化类加载器
+                    //3.设置当前线程的上下文类加载器
+                    //4.通过创建的catalinaLoader类加载器，加载catalina的核心类
+                    //5.加载catalina启动类org.apache.catalina.startup.Catalina
+                    //6.调用catalina启动类的setParentClassLoader(),设置父类加载器为sharedLoader
                     bootstrap.init();
                 } catch (Throwable t) {
                     handleThrowable(t);
                     t.printStackTrace();
                     return;
                 }
+                //bootstrap实例
                 daemon = bootstrap;
             } else {
                 // When running as a service the call to stop will be on a new
